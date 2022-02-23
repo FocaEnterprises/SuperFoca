@@ -1,4 +1,4 @@
-import { Interaction } from "discord.js"
+import { Interaction, Message } from "discord.js"
 import { REST } from "@discordjs/rest"
 import { Routes } from "discord-api-types/v9"
 
@@ -29,4 +29,8 @@ async function onInteraction(interaction: Interaction) {
   }
 }
 
-export { refreshSlashCommands, onInteraction }
+async function onMessage(message: Message) {
+  console.log(message)
+}
+
+export { refreshSlashCommands, onInteraction, onMessage }
