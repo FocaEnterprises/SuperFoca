@@ -366,6 +366,44 @@ func getIQIncrease(iq float64) float64 {
 	return base * e + 0.001
 }
 
+func semPutariaHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+	userId := m.Author.ID
+
+	if userId == s.State.User.ID {
+		return
+	}
+
+	if m.Author.Bot {
+		return
+	}
+
+	prohibitedWords := []string{
+		"sexo",
+		"puta",
+		"vagabunda",
+		"gozar",
+		"punheta",
+		"bronha",
+		"masturbar",
+		"masturbacao",
+		"pornografia",
+		"pornô",
+		"pinto",
+		"penis",
+		"buceta",
+		"xereca",
+		"sex",
+	}
+
+	lower := strings.ToLower(m.Content)
+	for _, v := range prohibitedWords {
+		if strings.Contains(lower, v) {
+			s.ChannelMessageSendReply(m.ChannelID, m.Author.Mention() + " SEM PUTARIA!!! :fire::fire::fire::speaking_head::speaking_head::speaking_head:", m.Reference())
+			return
+		}
+	}
+}
+
 func iqIncreaseHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	userId := m.Author.ID
 	guildId := m.GuildID

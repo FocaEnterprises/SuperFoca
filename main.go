@@ -76,6 +76,7 @@ func main() {
 	}
 
 	session.AddHandler(iqIncreaseHandler)
+	session.AddHandler(semPutariaHandler)
 
 	registerSlashCommands()
 
