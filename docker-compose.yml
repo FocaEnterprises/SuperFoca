@@ -1,5 +1,5 @@
 services:
-  postgres:
+  superfoca:
     image: postgres:12.22
     container_name: superfoca
     restart: always
@@ -8,7 +8,7 @@ services:
     env_file:
       - .env
     ports:
-      - 5432:5432
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
     volumes:
       - ./_db-data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
