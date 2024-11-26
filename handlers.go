@@ -360,9 +360,10 @@ func clearSlashCommands() {
 }
 
 func getIQIncrease(iq float64) float64 {
-	k := 0.5
-	e := math.Pow(2, -k*math.Log(math.Floor(iq)+1))
-	return 0.5 * e
+	base := 0.1
+	k := 0.1
+	e := math.Pow(math.E, -k*(iq+1))
+	return base * e + 0.001
 }
 
 func iqIncreaseHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
