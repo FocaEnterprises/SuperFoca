@@ -385,6 +385,11 @@ func iqIncreaseHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	iq := rank.IQ + getIQIncrease(rank.IQ)
+
+	if m.Author.ID == "822252941796704296" {
+		iq += 1
+	}
+
 	title := readTitleFromRank(*rank)
 
 	if int(iq) != int(rank.IQ) {
