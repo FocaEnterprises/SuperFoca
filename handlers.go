@@ -384,17 +384,18 @@ func iqIncreaseHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		rank = createRank(userId, guildId)
 	}
 
-	iq := rank.IQ + getIQIncrease(rank.IQ)
+	currentIQ := rank.IQ
+	newIQ := currentIQ + getIQIncrease(currentIQ)
 
 	if m.Author.ID == "822252941796704296" {
-		iq += 1
+		newIQ += 1
 	}
+
+	updateRank(*rank, newIQ)
 
 	title := readTitleFromRank(*rank)
 
-	if int(iq) != int(rank.IQ) {
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("**%s** agora tem **%.02f** de QI! Seu ranking é **%s**.", m.Author.Mention(), iq, title.Title))
+	if int(newIQ) != int(currentIQ) {
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("**%s** agora tem **%.02f** de QI! Seu ranking é **%s**.", m.Author.Mention(), newIQ, title.Title))
 	}
-
-	updateRank(*rank, iq)
 }
