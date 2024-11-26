@@ -20,7 +20,7 @@ CREATE TABLE ranks (
 
 INSERT INTO titles (title, iq) VALUES
 	('Ameba', 1.0),
-	('Australopithecus', 5.0),
+	('Neandertal', 10.0),
 	('Mula do PT', 13.0),
 	('Gado Bolsonarista', 22.0),
 	('Amante do Bolsa Família', 30.0),
