@@ -43,8 +43,8 @@ BEGIN
 	NEW.title_id = (
 		SELECT id
 		FROM titles
-		WHERE titles.iq <= NEW.iq
-		ORDER BY titles.iq DESC
+		WHERE NEW.iq >= titles.iq
+		ORDER BY titles.iq ASC
 		LIMIT 1
 	);
 	return NEW;
