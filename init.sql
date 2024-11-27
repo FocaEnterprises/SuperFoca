@@ -44,14 +44,14 @@ BEGIN
 		SELECT id
 		FROM titles
 		WHERE NEW.iq >= titles.iq
-		ORDER BY titles.iq ASC
+		ORDER BY titles.iq DESC
 		LIMIT 1
 	);
 	return NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER check_update ON ranks;
+DROP TRIGGER IF EXISTS check_update ON ranks;
 
 CREATE TRIGGER check_update
 	AFTER INSERT OR UPDATE ON ranks
