@@ -54,6 +54,6 @@ $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS check_update ON ranks;
 
 CREATE TRIGGER check_update
-	AFTER INSERT OR UPDATE ON ranks
+	BEFORE INSERT OR UPDATE ON ranks
 	FOR EACH ROW
 	EXECUTE FUNCTION update_ranks();
