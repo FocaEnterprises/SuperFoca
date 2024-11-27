@@ -250,6 +250,8 @@ var slashHandlers = map[string]func(s *discordgo.Session, i *discordgo.Interacti
 		buffer.WriteString("```md\n")
 
 		for n, v := range ranking {
+			title := readTitleFromRank(*v)
+
 			member, err := session.GuildMember(v.GuildId, v.UserId)
 
 			if err != nil {
@@ -257,7 +259,7 @@ var slashHandlers = map[string]func(s *discordgo.Session, i *discordgo.Interacti
 				return
 			}
 
-			buffer.WriteString(fmt.Sprintf("%3v. QI %6.2f · %s\n", n+1, v.IQ, member.User.Username))
+			buffer.WriteString(fmt.Sprintf("%3v. QI %6.2f · %s, %s\n", n+1, v.IQ, member.User.Username, title.Title))
 		}
 
 		buffer.WriteString("```")
@@ -282,7 +284,9 @@ var slashHandlers = map[string]func(s *discordgo.Session, i *discordgo.Interacti
 			return
 		}
 
-		interactionRespond(i, fmt.Sprintf("%s tem QI de %.02f!", user.Username, rank.IQ))
+		title := readTitleFromRank(*rank)
+
+		interactionRespond(i, fmt.Sprintf("%s tem QI de %.02f! Ranking %s", user.Username, rank.IQ, title.Title))
 	},
 	"tunes": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if i.ChannelID != "1097228819087237240" {
@@ -363,7 +367,7 @@ func getIQIncrease(iq float64) float64 {
 	base := 0.1
 	k := 0.1
 	e := math.Pow(math.E, -k*(iq+1))
-	return base * e + 0.001
+	return base*e + 0.001
 }
 
 func semPutariaHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -387,7 +391,10 @@ func semPutariaHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		"masturbar",
 		"masturbacao",
 		"pornografia",
+		"punhetao",
+		"punhetão",
 		"pornô",
+		"porno",
 		"pinto",
 		"penis",
 		"buceta",
@@ -398,7 +405,7 @@ func semPutariaHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	lower := strings.ToLower(m.Content)
 	for _, v := range prohibitedWords {
 		if strings.Contains(lower, v) {
-			s.ChannelMessageSendReply(m.ChannelID, m.Author.Mention() + " SEM PUTARIA!!! :fire::fire::fire::speaking_head::speaking_head::speaking_head:", m.Reference())
+			s.ChannelMessageSendReply(m.ChannelID, m.Author.Mention()+" SEM PUTARIA!!! :fire::fire::fire::speaking_head::speaking_head::speaking_head:", m.Reference())
 			return
 		}
 	}
