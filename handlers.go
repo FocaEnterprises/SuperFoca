@@ -432,10 +432,6 @@ func iqIncreaseHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	currentIQ := rank.IQ
 	newIQ := currentIQ + getIQIncrease(currentIQ)
 
-	if m.Author.ID == "822252941796704296" {
-		newIQ += 1
-	}
-
 	updateRank(*rank, newIQ)
 
 	title := readTitleFromRank(*rank)
