@@ -75,7 +75,7 @@ func main() {
 		log.Fatalf("failed to start bot client: %s", err)
 	}
 
-	session.UpdateCustomStatus("vai corinthians!!!!")
+	session.UpdateCustomStatus("vai mengão!!!!")
 
 	session.AddHandler(iqIncreaseHandler)
 	session.AddHandler(semPutariaHandler)
