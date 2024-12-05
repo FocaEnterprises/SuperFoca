@@ -80,6 +80,7 @@ func main() {
 	session.AddHandler(iqIncreaseHandler)
 	session.AddHandler(semPutariaHandler)
 
+	initCommands()
 	registerSlashCommands()
 
 	sigch := make(chan os.Signal, 1)
