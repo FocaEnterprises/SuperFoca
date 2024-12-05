@@ -78,7 +78,7 @@ var commands = []*discordgo.ApplicationCommand{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        "mensagem",
-				Description: "String A mensagem a ser ecoada",
+				Description: "A mensagem a ser ecoada",
 				Required:    true,
 			},
 		},
@@ -95,7 +95,7 @@ var commands = []*discordgo.ApplicationCommand{
 					{
 						Type:        discordgo.ApplicationCommandOptionString,
 						Name:        "playlist",
-						Description: "String A playlist que vai ser consultada.",
+						Description: "A playlist que vai ser consultada.",
 						Choices:     playlistChoices,
 						Required:    true,
 					},
@@ -109,14 +109,14 @@ var commands = []*discordgo.ApplicationCommand{
 					{
 						Type:        discordgo.ApplicationCommandOptionString,
 						Name:        "playlist",
-						Description: "String A playlist em que a música vai ser adicionada.",
+						Description: "A playlist em que a música vai ser adicionada.",
 						Required:    true,
 						Choices:     playlistChoices,
 					},
 					{
 						Type:        discordgo.ApplicationCommandOptionString,
 						Name:        "música",
-						Description: "String Um link ou ID de música no YouTube.",
+						Description: "Um link ou ID de música no YouTube.",
 						Required:    true,
 					},
 				},
