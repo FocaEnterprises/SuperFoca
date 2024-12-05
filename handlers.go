@@ -17,60 +17,59 @@ import (
 	"google.golang.org/api/youtube/v3"
 )
 
-var registeredCommands []*discordgo.ApplicationCommand
-var playlistChoices []*discordgo.ApplicationCommandOptionChoice
-var commands []*discordgo.ApplicationCommand
+var registeredCommands = make([]*discordgo.ApplicationCommand, len(commands))
 
-func initCommands() {
-	response, err := http.Get("http://localhost:8080/playlists")
+var playlistChoices = []*discordgo.ApplicationCommandOptionChoice{
+	{
+		Name:  "Foca Rock",
+		Value: "rock",
+	},
+	{
+		Name:  "Foca Phonk",
+		Value: "phonk",
+	},
+	{
+		Name:  "Foca Funk",
+		Value: "funk",
+	},
+	{
+		Name:  "Foca Indie",
+		Value: "indie",
+	},
+	{
+		Name:  "Foca Disco",
+		Value: "disco",
+	},
+	{
+		Name:  "Foca Alternativo",
+		Value: "alternativo",
+	},
+	{
+		Name:  "Foca Pop",
+		Value: "pop",
+	},
+	{
+		Name:  "Foca Nacional",
+		Value: "nacional",
+	},
+}
 
-	if err != nil {
-		log.Printf("failed retrieving playlists: %s", err)
-		return
-	}
-
-	playlists := make(map[string]any)
-
-	err = json.NewDecoder(response.Body).Decode(&playlists)
-
-	if err != nil {
-		log.Printf("failed decoding playlists: %s", err)
-		return
-	}
-
-	for k := range playlists {
-		response, err := http.Get("http://localhost:8080/playlists/" + k)
-
-		if err != nil {
-			log.Printf("failed retrieving playlist title: %s", err)
-			return
-		}
-
-		var playlistData map[string]any
-
-		err = json.NewDecoder(response.Body).Decode(&playlistData)
-
-		if err != nil {
-			log.Printf("failed decoding playlist data: %s", err)
-			return
-		}
-
-		defer response.Body.Close()
-
-		snippet := playlistData["snippet"].(map[string]any)
-
-		playlistChoices = append(playlistChoices, &discordgo.ApplicationCommandOptionChoice{
-			Name:  snippet["title"].(string),
-			Value: k,
-		})
-	}
-
-	commands = []*discordgo.ApplicationCommand{
-		{
-			Name:        "ranking",
-			Description: "Consulta o ranking de QI do servidor.",
+var commands = []*discordgo.ApplicationCommand{
+	{
+		Name:        "ranking",
+		Description: "Consulta o ranking de QI do servidor.",
+	},
+	{
+		Name:        "iq",
+		Description: "Consulta o QI de um usuário",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:        discordgo.ApplicationCommandOptionUser,
+				Name:        "usuário",
+				Description: "User O usuário a ser consultado",
+				Required:    false,
+			},
 		},
-<<<<<<< Updated upstream
 	},
 	{
 		Name:        "echo",
@@ -119,73 +118,11 @@ func initCommands() {
 						Name:        "música",
 						Description: "Um link ou ID de música no YouTube.",
 						Required:    true,
-=======
-		{
-			Name:        "iq",
-			Description: "Consulta o QI de um usuário",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionUser,
-					Name:        "usuário",
-					Description: "User O usuário a ser consultado",
-					Required:    false,
-				},
-			},
-		},
-		{
-			Name:        "echo",
-			Description: "Eco! (Eco!)",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "mensagem",
-					Description: "A mensagem a ser ecoada",
-					Required:    true,
-				},
-			},
-		},
-		{
-			Name:        "tunes",
-			Description: "Manipulação das playlists da Foca Tunes",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Name:        "list",
-					Description: "Lista as músicas de uma playlist.",
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "playlist",
-							Description: "A playlist que vai ser consultada.",
-							Choices:     playlistChoices,
-							Required:    true,
-						},
-					},
-				},
-				{
-					Name:        "add",
-					Description: "Adiciona uma música à playlist.",
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "playlist",
-							Description: "A playlist em que a música vai ser adicionada.",
-							Required:    true,
-							Choices:     playlistChoices,
-						},
-						{
-							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "música",
-							Description: "Um link ou ID de música no YouTube.",
-							Required:    true,
-						},
->>>>>>> Stashed changes
 					},
 				},
 			},
 		},
-	}
+	},
 }
 
 func parseOptions(options []*discordgo.ApplicationCommandInteractionDataOption) *map[string]*discordgo.ApplicationCommandInteractionDataOption {
@@ -399,14 +336,14 @@ var slashHandlers = map[string]func(s *discordgo.Session, i *discordgo.Interacti
 }
 
 func registerSlashCommands() {
-	for _, v := range commands {
+	for i, v := range commands {
 		cmd, err := session.ApplicationCommandCreate(session.State.User.ID, GuildId, v)
 
 		if err != nil {
 			log.Fatalf("failed to register command: %s", err)
 		}
 
-		registeredCommands = append(registeredCommands, cmd)
+		registeredCommands[i] = cmd
 	}
 
 	session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
