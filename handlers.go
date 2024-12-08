@@ -17,113 +17,115 @@ import (
 	"google.golang.org/api/youtube/v3"
 )
 
-var registeredCommands = make([]*discordgo.ApplicationCommand, len(commands))
-
-var playlistChoices = []*discordgo.ApplicationCommandOptionChoice{
-	{
-		Name:  "Foca Rock",
-		Value: "rock",
-	},
-	{
-		Name:  "Foca Phonk",
-		Value: "phonk",
-	},
-	{
-		Name:  "Foca Funk",
-		Value: "funk",
-	},
-	{
-		Name:  "Foca Indie",
-		Value: "indie",
-	},
-	{
-		Name:  "Foca Disco",
-		Value: "disco",
-	},
-	{
-		Name:  "Foca Alternativo",
-		Value: "alternativo",
-	},
-	{
-		Name:  "Foca Pop",
-		Value: "pop",
-	},
-	{
-		Name:  "Foca Nacional",
-		Value: "nacional",
-	},
-}
-
-var commands = []*discordgo.ApplicationCommand{
-	{
-		Name:        "ranking",
-		Description: "Consulta o ranking de QI do servidor.",
-	},
-	{
-		Name:        "iq",
-		Description: "Consulta o QI de um usuário",
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:        discordgo.ApplicationCommandOptionUser,
-				Name:        "usuário",
-				Description: "User O usuário a ser consultado",
-				Required:    false,
-			},
+var (
+	playlistChoices = []*discordgo.ApplicationCommandOptionChoice{
+		{
+			Name:  "Foca Rock",
+			Value: "rock",
 		},
-	},
-	{
-		Name:        "echo",
-		Description: "Eco! (Eco!)",
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        "mensagem",
-				Description: "A mensagem a ser ecoada",
-				Required:    true,
-			},
+		{
+			Name:  "Foca Phonk",
+			Value: "phonk",
 		},
-	},
-	{
-		Name:        "tunes",
-		Description: "Manipulação das playlists da Foca Tunes",
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Name:        "list",
-				Description: "Lista as músicas de uma playlist.",
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "playlist",
-						Description: "A playlist que vai ser consultada.",
-						Choices:     playlistChoices,
-						Required:    true,
-					},
-				},
-			},
-			{
-				Name:        "add",
-				Description: "Adiciona uma música à playlist.",
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "playlist",
-						Description: "A playlist em que a música vai ser adicionada.",
-						Required:    true,
-						Choices:     playlistChoices,
-					},
-					{
-						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "música",
-						Description: "Um link ou ID de música no YouTube.",
-						Required:    true,
-					},
+		{
+			Name:  "Foca Funk",
+			Value: "funk",
+		},
+		{
+			Name:  "Foca Indie",
+			Value: "indie",
+		},
+		{
+			Name:  "Foca Disco",
+			Value: "disco",
+		},
+		{
+			Name:  "Foca Alternativo",
+			Value: "alternativo",
+		},
+		{
+			Name:  "Foca Pop",
+			Value: "pop",
+		},
+		{
+			Name:  "Foca Nacional",
+			Value: "nacional",
+		},
+	}
+
+	commands = []*discordgo.ApplicationCommand{
+		{
+			Name:        "ranking",
+			Description: "Consulta o ranking de QI do servidor.",
+		},
+		{
+			Name:        "iq",
+			Description: "Consulta o QI de um usuário",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionUser,
+					Name:        "usuário",
+					Description: "O usuário a ser consultado",
+					Required:    false,
 				},
 			},
 		},
-	},
-}
+		{
+			Name:        "echo",
+			Description: "Eco! (Eco!)",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "mensagem",
+					Description: "A mensagem a ser ecoada",
+					Required:    true,
+				},
+			},
+		},
+		{
+			Name:        "tunes",
+			Description: "Manipulação das playlists da Foca Tunes",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:        "list",
+					Description: "Lista as músicas de uma playlist.",
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "playlist",
+							Description: "A playlist que vai ser consultada.",
+							Choices:     playlistChoices,
+							Required:    true,
+						},
+					},
+				},
+				{
+					Name:        "add",
+					Description: "Adiciona uma música à playlist.",
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "playlist",
+							Description: "A playlist em que a música vai ser adicionada.",
+							Required:    true,
+							Choices:     playlistChoices,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "música",
+							Description: "Um link ou ID de música no YouTube.",
+							Required:    true,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	registeredCommands = make([]*discordgo.ApplicationCommand, len(commands))
+)
 
 func parseOptions(options []*discordgo.ApplicationCommandInteractionDataOption) *map[string]*discordgo.ApplicationCommandInteractionDataOption {
 	opts := make(map[string]*discordgo.ApplicationCommandInteractionDataOption)
