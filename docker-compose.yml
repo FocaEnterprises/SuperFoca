@@ -1,6 +1,6 @@
 services:
   superfoca:
-    image: postgres
+    image: postgres:17.2
     container_name: superfoca
     restart: always
     networks:
