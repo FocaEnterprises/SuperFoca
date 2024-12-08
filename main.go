@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -36,12 +35,8 @@ func init() {
 
 	GuildId := os.Getenv("DISCORD_GUILD")
 	Token := os.Getenv("DISCORD_TOKEN")
-	dbUser := os.Getenv("PGUSER")
-	dbPassword := os.Getenv("PGPASSWORD")
-	dbName := os.Getenv("PGDATABASE")
-	dbPort := os.Getenv("PGPORT")
 
-	if slices.Contains([]string{GuildId, Token, dbUser, dbPassword, dbName, dbPort}, "") {
+	if slices.Contains([]string{GuildId, Token}, "") {
 		log.Fatal("FAILED RETRIEVING ENVIRONMENT VARIABLES")
 	}
 
@@ -51,7 +46,7 @@ func init() {
 		log.Fatalf("failed to authorize bot: %s", err)
 	}
 
-	db, err = sql.Open("postgres", fmt.Sprintf("host=127.0.0.1 port=%s user=%s password=%s dbname=%s sslmode=disable", dbPort, dbUser, dbPassword, dbName))
+	db, err = sql.Open("postgres", "")
 
 	if err != nil {
 		log.Fatalf("failed to establish database connection: %s", err)
