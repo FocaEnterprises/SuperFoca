@@ -75,13 +75,12 @@ func main() {
 	session.AddHandler(iqIncreaseHandler)
 	session.AddHandler(semPutariaHandler)
 
-	registerSlashCommands()
+	initCommands()
+	defer clearSlashCommands()
 
 	sigch := make(chan os.Signal, 1)
 	signal.Notify(sigch, os.Interrupt)
 	<-sigch
-
-	clearSlashCommands()
 
 	if err := session.Close(); err != nil {
 		log.Printf("failed closing session: %s", err)

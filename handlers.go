@@ -136,6 +136,8 @@ func initCommands() {
 	}
 
 	registeredCommands = make([]*discordgo.ApplicationCommand, len(commands))
+
+	registerSlashCommands()
 }
 
 func parseOptions(options []*discordgo.ApplicationCommandInteractionDataOption) *map[string]*discordgo.ApplicationCommandInteractionDataOption {
