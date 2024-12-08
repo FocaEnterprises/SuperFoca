@@ -18,46 +18,57 @@ import (
 )
 
 var (
-	playlistChoices = []*discordgo.ApplicationCommandOptionChoice{
-		{
-			Name:  "Foca Rock",
-			Value: "rock",
-		},
-		{
-			Name:  "Foca Phonk",
-			Value: "phonk",
-		},
-		{
-			Name:  "Foca Funk",
-			Value: "funk",
-		},
-		{
-			Name:  "Foca Indie",
-			Value: "indie",
-		},
-		{
-			Name:  "Foca Disco",
-			Value: "disco",
-		},
-		{
-			Name:  "Foca Alternativo",
-			Value: "alternativo",
-		},
-		{
-			Name:  "Foca Pop",
-			Value: "pop",
-		},
-		{
-			Name:  "Foca Nacional",
-			Value: "nacional",
-		},
+	registeredCommands []*discordgo.ApplicationCommand
+	commands           []*discordgo.ApplicationCommand
+)
+
+func initCommands() {
+	response, err := http.Get("http://localhost:8080/playlists")
+
+	if err != nil {
+		log.Printf("failed retrieving playlists: %s", err)
+		return
+	}
+
+	playlists := make(map[string]any)
+
+	err = json.NewDecoder(response.Body).Decode(&playlists)
+
+	if err != nil {
+		log.Printf("failed decoding playlists: %s", err)
+		return
+	}
+
+	playlistChoices := make([]*discordgo.ApplicationCommandOptionChoice, 0)
+
+	for k := range playlists {
+		response, err := http.Get("http://localhost:8080/playlists/" + k)
+
+		if err != nil {
+			log.Printf("failed retrieving playlist title: %s", err)
+			return
+		}
+
+		var playlistData map[string]any
+
+		err = json.NewDecoder(response.Body).Decode(&playlistData)
+
+		if err != nil {
+			log.Printf("failed decoding playlist data: %s", err)
+			return
+		}
+
+		defer response.Body.Close()
+
+		snippet := playlistData["snippet"].(map[string]any)
+
+		playlistChoices = append(playlistChoices, &discordgo.ApplicationCommandOptionChoice{
+			Name:  snippet["title"].(string),
+			Value: k,
+		})
 	}
 
 	commands = []*discordgo.ApplicationCommand{
-		{
-			Name:        "ranking",
-			Description: "Consulta o ranking de QI do servidor.",
-		},
 		{
 			Name:        "iq",
 			Description: "Consulta o QI de um usuário",
@@ -125,7 +136,7 @@ var (
 	}
 
 	registeredCommands = make([]*discordgo.ApplicationCommand, len(commands))
-)
+}
 
 func parseOptions(options []*discordgo.ApplicationCommandInteractionDataOption) *map[string]*discordgo.ApplicationCommandInteractionDataOption {
 	opts := make(map[string]*discordgo.ApplicationCommandInteractionDataOption)
@@ -338,14 +349,14 @@ var slashHandlers = map[string]func(s *discordgo.Session, i *discordgo.Interacti
 }
 
 func registerSlashCommands() {
-	for i, v := range commands {
+	for _, v := range commands {
 		cmd, err := session.ApplicationCommandCreate(session.State.User.ID, GuildId, v)
 
 		if err != nil {
 			log.Fatalf("failed to register command: %s", err)
 		}
 
-		registeredCommands[i] = cmd
+		registeredCommands = append(registeredCommands, cmd)
 	}
 
 	session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
