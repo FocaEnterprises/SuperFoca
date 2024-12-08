@@ -4,7 +4,7 @@ services:
     container_name: superfoca
     restart: always
     networks:
-      - postgres-network
+      - postgres
     env_file:
       - .env
     ports:
@@ -14,5 +14,5 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
 networks:
-  postgres-network:
+  postgres:
     driver: bridge
