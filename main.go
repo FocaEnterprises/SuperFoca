@@ -36,10 +36,10 @@ func init() {
 
 	GuildId := os.Getenv("DISCORD_GUILD")
 	Token := os.Getenv("DISCORD_TOKEN")
-	dbUser := os.Getenv("POSTGRES_USER")
-	dbPassword := os.Getenv("POSTGRES_PASSWORD")
-	dbName := os.Getenv("POSTGRES_DB")
-	dbPort := os.Getenv("POSTGRES_PORT")
+	dbUser := os.Getenv("PGUSER")
+	dbPassword := os.Getenv("PGPASSWORD")
+	dbName := os.Getenv("PGDATABASE")
+	dbPort := os.Getenv("PGPORT")
 
 	if slices.Contains([]string{GuildId, Token, dbUser, dbPassword, dbName, dbPort}, "") {
 		log.Fatal("FAILED RETRIEVING ENVIRONMENT VARIABLES")
