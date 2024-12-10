@@ -13,9 +13,12 @@ type SlashCommand struct {
 }
 
 var (
-	playlistChoices    []*discordgo.ApplicationCommandOptionChoice
-	Commands           map[string]*SlashCommand = make(map[string]*SlashCommand)
+	Commands map[string]*SlashCommand
 )
+
+func init() {
+	Commands = make(map[string]*SlashCommand)
+}
 
 func Init(session *discordgo.Session) {
 	bot.Session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -90,4 +93,3 @@ func ParseOptions(options []*discordgo.ApplicationCommandInteractionDataOption) 
 
 	return &opts
 }
-

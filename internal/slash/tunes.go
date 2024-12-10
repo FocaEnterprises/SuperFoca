@@ -141,7 +141,7 @@ func init() {
 		return
 	}
 
-	playlistChoices = make([]*discordgo.ApplicationCommandOptionChoice, 0, len(playlists.Data))
+	playlistChoices := make([]*discordgo.ApplicationCommandOptionChoice, 0, len(playlists.Data))
 
 	for v, k := range playlists.Data {
 		playlistChoices = append(playlistChoices, &discordgo.ApplicationCommandOptionChoice{
