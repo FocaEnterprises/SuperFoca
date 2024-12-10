@@ -1,4 +1,4 @@
-package main
+package database
 
 import (
 	"log"
@@ -12,7 +12,7 @@ type Rank struct {
 	TitleId int     `sql:"title_id"`
 }
 
-func createRank(userId, guildId string) *Rank {
+func CreateRank(userId, guildId string) *Rank {
 	createQuery, err := db.Prepare("INSERT INTO ranks (user_id, guild_id) VALUES ($1, $2)")
 
 	if err != nil {
@@ -29,12 +29,12 @@ func createRank(userId, guildId string) *Rank {
 		return nil
 	}
 
-	rank := findRank(userId, guildId)
+	rank := FindRankByUser(userId, guildId)
 
 	return rank
 }
 
-func updateRank(rank Rank, iq float64) {
+func UpdateRank(rank Rank, iq float64) {
 	updateQuery, err := db.Prepare("UPDATE ranks SET iq = $1 WHERE id = $2")
 
 	if err != nil {
@@ -52,7 +52,7 @@ func updateRank(rank Rank, iq float64) {
 	}
 }
 
-func findRank(userId, guildId string) *Rank {
+func FindRankByUser(userId, guildId string) *Rank {
 	readQuery, err := db.Query("SELECT * FROM ranks WHERE user_id = $1 AND guild_id = $2", userId, guildId)
 
 	if err != nil {
@@ -78,7 +78,7 @@ func findRank(userId, guildId string) *Rank {
 	return &rank
 }
 
-func getRanking(page int, limit int) []*Rank {
+func GetRanking(page int, limit int) []*Rank {
 	readQuery, err := db.Query("SELECT * FROM ranks ORDER BY iq DESC LIMIT $1 OFFSET $2", limit, page*limit)
 
 	if err != nil {

@@ -1,4 +1,4 @@
-package main
+package database
 
 import "log"
 
@@ -8,7 +8,7 @@ type Title struct {
 	IQ    float64 `sql:"float"`
 }
 
-func readTitleFromRank(rank Rank) *Title {
+func ReadTitleFromRank(rank Rank) *Title {
 	query, err := db.Query("SELECT * FROM titles WHERE id = $1", rank.TitleId)
 
 	defer query.Close()

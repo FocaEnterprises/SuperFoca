@@ -1,88 +1,37 @@
 package main
 
 import (
-	"database/sql"
-	"flag"
 	"log"
 	"os"
 	"os/signal"
-	"slices"
+	"superfoca/internal/bot"
+	"superfoca/internal/database"
+	"superfoca/internal/slash"
 
-	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
 
 	_ "github.com/lib/pq"
 )
 
-var (
-	GuildId string
-	Token   string
-
-	session *discordgo.Session
-	db      *sql.DB
-)
-
 func init() {
-	flag.Parse()
-
-	var err error
-
-	err = godotenv.Load(".env")
+	err := godotenv.Load(".env")
 
 	if err != nil {
-		log.Fatalf("couldn't read .env: %s", err)
+		log.Fatal(err)
 	}
-
-	GuildId := os.Getenv("DISCORD_GUILD")
-	Token := os.Getenv("DISCORD_TOKEN")
-
-	if slices.Contains([]string{GuildId, Token}, "") {
-		log.Fatal("FAILED RETRIEVING ENVIRONMENT VARIABLES")
-	}
-
-	session, err = discordgo.New("Bot " + Token)
-
-	if err != nil {
-		log.Fatalf("failed to authorize bot: %s", err)
-	}
-
-	db, err = sql.Open("postgres", "")
-
-	if err != nil {
-		log.Fatalf("failed to establish database connection: %s", err)
-	}
-
-	if err = db.Ping(); err != nil {
-		log.Fatalf("failed to reach database: %s", err)
-	}
-
-	log.Println("succesfully established database connection")
 }
 
 func main() {
-	session.Identify.Intents = discordgo.IntentsAll
+	database.Init()
 
-	session.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
-		log.Printf("logged in as %s", session.State.User.String())
-	})
-
-	if err := session.Open(); err != nil {
-		log.Fatalf("failed to start bot client: %s", err)
-	}
-
-	session.UpdateCustomStatus("vai mengão!!!!")
-
-	session.AddHandler(iqIncreaseHandler)
-	session.AddHandler(semPutariaHandler)
-
-	initCommands()
-	defer clearSlashCommands()
+	bot.Init()
+	slash.Init(bot.Session)
 
 	sigch := make(chan os.Signal, 1)
 	signal.Notify(sigch, os.Interrupt)
 	<-sigch
 
-	if err := session.Close(); err != nil {
-		log.Printf("failed closing session: %s", err)
+	if err := bot.Session.Close(); err != nil {
+		log.Printf("failed closing bot.Session: %s", err)
 	}
 }
