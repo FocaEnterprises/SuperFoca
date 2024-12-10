@@ -143,7 +143,6 @@ func init() {
 
 	playlistChoices = make([]*discordgo.ApplicationCommandOptionChoice, 0, len(playlists.Data))
 
-	// v is the playlist id
 	for v, k := range playlists.Data {
 		playlistChoices = append(playlistChoices, &discordgo.ApplicationCommandOptionChoice{
 			Name:  k.Snippet.Title,
