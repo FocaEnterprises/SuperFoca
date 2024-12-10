@@ -12,6 +12,8 @@ var (
 func Init() {
 	var err error
 
+	// The connection is configured by libpq using Postgres environment variables.
+	// These environment variables are listed here: https://www.postgresql.org/docs/current/libpq-envars.html
 	db, err = sql.Open("postgres", "")
 
 	if err != nil {
