@@ -18,9 +18,29 @@ import (
 )
 
 var (
+	playlistChoices    []*discordgo.ApplicationCommandOptionChoice
+	slashHandlers      map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate)
 	registeredCommands []*discordgo.ApplicationCommand
 	commands           []*discordgo.ApplicationCommand
 )
+
+type FocaTunesVideoResponse struct {
+	Status  string         `json:"status"`
+	Message string         `json:"message"`
+	Data    *youtube.Video `json:"data"`
+}
+
+type FocaTunesPlaylistsResponse struct {
+	Status  string                       `json:"status"`
+	Message string                       `json:"message"`
+	Data    map[string]*youtube.Playlist `json:"data"`
+}
+
+type FocaTunesPlaylistResponse struct {
+	Status  string            `json:"status"`
+	Message string            `json:"message"`
+	Data    *youtube.Playlist `json:"data"`
+}
 
 func initCommands() {
 	response, err := http.Get("http://localhost:8080/playlists")
@@ -30,7 +50,7 @@ func initCommands() {
 		return
 	}
 
-	playlists := make(map[string]any)
+	playlists := FocaTunesPlaylistsResponse{}
 
 	err = json.NewDecoder(response.Body).Decode(&playlists)
 
@@ -39,32 +59,18 @@ func initCommands() {
 		return
 	}
 
-	playlistChoices := make([]*discordgo.ApplicationCommandOptionChoice, 0)
+	if playlists.Status != "success" {
+		log.Println("failed")
+		return
+	}
 
-	for k := range playlists {
-		response, err := http.Get("http://localhost:8080/playlists/" + k)
+	playlistChoices = make([]*discordgo.ApplicationCommandOptionChoice, 0, len(playlists.Data))
 
-		if err != nil {
-			log.Printf("failed retrieving playlist title: %s", err)
-			return
-		}
-
-		var playlistData map[string]any
-
-		err = json.NewDecoder(response.Body).Decode(&playlistData)
-
-		if err != nil {
-			log.Printf("failed decoding playlist data: %s", err)
-			return
-		}
-
-		defer response.Body.Close()
-
-		snippet := playlistData["snippet"].(map[string]any)
-
+	// v is the playlist id
+	for v, k := range playlists.Data {
 		playlistChoices = append(playlistChoices, &discordgo.ApplicationCommandOptionChoice{
-			Name:  snippet["title"].(string),
-			Value: k,
+			Name:  k.Snippet.Title,
+			Value: v,
 		})
 	}
 
@@ -135,7 +141,104 @@ func initCommands() {
 		},
 	}
 
-	registeredCommands = make([]*discordgo.ApplicationCommand, len(commands))
+	slashHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
+		"ranking": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			ranking := getRanking(0, 10)
+
+			if ranking == nil {
+				interactionRespondEphemeral(i, "Não consegui pegar o ranking...")
+				return
+			}
+
+			buffer := &strings.Builder{}
+
+			buffer.WriteString("```\n")
+
+			for n, v := range ranking {
+				title := readTitleFromRank(*v)
+
+				member, err := session.GuildMember(v.GuildId, v.UserId)
+
+				if err != nil {
+					interactionRespondEphemeral(i, "Não consegui pegar o ranking...")
+					return
+				}
+
+				buffer.WriteString(fmt.Sprintf("%3v. QI %6.2f · %s, %s\n", n+1, v.IQ, member.User.Username, title.Title))
+			}
+
+			buffer.WriteString("```")
+
+			interactionRespond(i, buffer.String())
+		},
+		"iq": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			options := *parseOptions(i.ApplicationCommandData().Options)
+
+			var user *discordgo.User
+
+			if options["usuário"] != nil {
+				user = options["usuário"].UserValue(s)
+			} else {
+				user = i.Member.User
+			}
+
+			rank := findRank(user.ID, i.GuildID)
+
+			if rank == nil {
+				interactionRespond(i, fmt.Sprintf("O usuário %s nem sequer tem QI...", user.Username))
+				return
+			}
+
+			title := readTitleFromRank(*rank)
+
+			interactionRespond(i, fmt.Sprintf("%s tem QI de %.02f! Ranking %s", user.Username, rank.IQ, title.Title))
+		},
+		"tunes": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			if i.ChannelID != "1097228819087237240" {
+				interactionRespondEphemeral(i, fmt.Sprintf("Esse comando só pode ser usado no canal da Foca Tunes!"))
+				return
+			}
+
+			if i.Member.User.Bot == true {
+				interactionRespondEphemeral(i, "Você não tem permissão para isso!")
+				return
+			}
+
+			focaTunesRole := "1308938228589400095"
+
+			if !slices.Contains(i.Member.Roles, focaTunesRole) {
+				interactionRespondEphemeral(i, "Você não tem permissão para isso!")
+				return
+			}
+
+			options := i.ApplicationCommandData().Options
+
+			switch options[0].Name {
+			case "add":
+				tunesAdd(i, options[0].Options)
+				break
+			case "list":
+				tunesList(i, options[0].Options)
+				break
+			default:
+				break
+			}
+
+		},
+		"echo": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			options := *parseOptions(i.ApplicationCommandData().Options)
+
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "Enviado...",
+					Flags:   discordgo.MessageFlagsEphemeral,
+				},
+			})
+
+			s.ChannelMessageSend(i.ChannelID, options["mensagem"].StringValue())
+		},
+	}
 
 	registerSlashCommands()
 }
@@ -202,7 +305,7 @@ func tunesAdd(i *discordgo.InteractionCreate, options []*discordgo.ApplicationCo
 
 	defer videoJSON.Body.Close()
 
-	var video youtube.Video
+	var video FocaTunesVideoResponse
 
 	err = json.NewDecoder(videoJSON.Body).Decode(&video)
 
@@ -211,7 +314,12 @@ func tunesAdd(i *discordgo.InteractionCreate, options []*discordgo.ApplicationCo
 		return
 	}
 
-	_, err = http.Post(fmt.Sprintf("http://localhost:8080/playlists/%s/songs", playlist), "application/json", videoJSON.Body)
+	if videoJSON.StatusCode != http.StatusOK {
+		log.Printf("carai")
+		return
+	}
+
+	_, err = http.Post(fmt.Sprintf("http://localhost:8080/playlists/%s", playlist), "application/json", strings.NewReader(fmt.Sprintf("{ \"resourceId\": %q }", video.Data.Id)))
 
 	if err != nil {
 		log.Printf("couldn't post song: %s", err)
@@ -225,15 +333,15 @@ func tunesAdd(i *discordgo.InteractionCreate, options []*discordgo.ApplicationCo
 			Embeds: []*discordgo.MessageEmbed{
 				{
 					Author: &discordgo.MessageEmbedAuthor{
-						Name: video.Snippet.ChannelTitle,
+						Name: video.Data.Snippet.ChannelTitle,
 						URL:  "https://music.youtube.com/" + i.ChannelID,
 					},
 					Image: &discordgo.MessageEmbedImage{
-						URL: video.Snippet.Thumbnails.Maxres.Url,
+						URL: video.Data.Snippet.Thumbnails.Maxres.Url,
 					},
-					URL:   "https://music.youtube.com/watch?v=" + video.Id,
+					URL:   "https://music.youtube.com/watch?v=" + video.Data.Id,
 					Color: 0xFFFF00,
-					Title: video.Snippet.Title,
+					Title: video.Data.Snippet.Title,
 					Fields: []*discordgo.MessageEmbedField{
 						{
 							Name:  "Playlist",
@@ -251,111 +359,15 @@ func tunesAdd(i *discordgo.InteractionCreate, options []*discordgo.ApplicationCo
 	})
 }
 
-var slashHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-	"ranking": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		ranking := getRanking(0, 10)
-
-		if ranking == nil {
-			interactionRespondEphemeral(i, "Não consegui pegar o ranking...")
-			return
-		}
-
-		buffer := &strings.Builder{}
-
-		buffer.WriteString("```md\n")
-
-		for n, v := range ranking {
-			title := readTitleFromRank(*v)
-
-			member, err := session.GuildMember(v.GuildId, v.UserId)
-
-			if err != nil {
-				interactionRespondEphemeral(i, "Não consegui pegar o ranking...")
-				return
-			}
-
-			buffer.WriteString(fmt.Sprintf("%3v. QI %6.2f · %s, %s\n", n+1, v.IQ, member.User.Username, title.Title))
-		}
-
-		buffer.WriteString("```")
-
-		interactionRespond(i, buffer.String())
-	},
-	"iq": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		options := *parseOptions(i.ApplicationCommandData().Options)
-
-		var user *discordgo.User
-
-		if options["usuário"] != nil {
-			user = options["usuário"].UserValue(s)
-		} else {
-			user = i.Member.User
-		}
-
-		rank := findRank(user.ID, i.GuildID)
-
-		if rank == nil {
-			interactionRespond(i, fmt.Sprintf("O usuário %s nem sequer tem QI...", user.Username))
-			return
-		}
-
-		title := readTitleFromRank(*rank)
-
-		interactionRespond(i, fmt.Sprintf("%s tem QI de %.02f! Ranking %s", user.Username, rank.IQ, title.Title))
-	},
-	"tunes": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if i.ChannelID != "1097228819087237240" {
-			interactionRespondEphemeral(i, fmt.Sprintf("Esse comando só pode ser usado no canal da Foca Tunes!"))
-			return
-		}
-
-		if i.Member.User.Bot == true {
-			interactionRespondEphemeral(i, "Você não tem permissão para isso!")
-			return
-		}
-
-		focaTunesRole := "1308938228589400095"
-
-		if !slices.Contains(i.Member.Roles, focaTunesRole) {
-			interactionRespondEphemeral(i, "Você não tem permissão para isso!")
-			return
-		}
-
-		options := i.ApplicationCommandData().Options
-
-		switch options[0].Name {
-		case "add":
-			tunesAdd(i, options[0].Options)
-			break
-		case "list":
-			tunesList(i, options[0].Options)
-			break
-		default:
-			break
-		}
-
-	},
-	"echo": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		options := *parseOptions(i.ApplicationCommandData().Options)
-
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "Enviado...",
-				Flags:   discordgo.MessageFlagsEphemeral,
-			},
-		})
-
-		s.ChannelMessageSend(i.ChannelID, options["mensagem"].StringValue())
-	},
-}
-
 func registerSlashCommands() {
+	registeredCommands = make([]*discordgo.ApplicationCommand, len(commands))
+
 	for _, v := range commands {
 		cmd, err := session.ApplicationCommandCreate(session.State.User.ID, GuildId, v)
 
 		if err != nil {
-			log.Fatalf("failed to register command: %s", err)
+			log.Printf("failed to register command: %s\n", err)
+			continue
 		}
 
 		registeredCommands = append(registeredCommands, cmd)
